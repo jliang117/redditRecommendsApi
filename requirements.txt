@@ -23,7 +23,7 @@ MarkupSafe==1.1.0
 msgpack==0.5.6
 msgpack-numpy==0.4.3.2
 murmurhash==1.0.2
-nltk==3.4
+nltk==3.4.5
 numpy
 pandas
 plac==0.9.6
