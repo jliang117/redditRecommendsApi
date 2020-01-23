@@ -16,6 +16,7 @@ import time
 import spacyner
 
 GOOGLE_PAGE_LIMIT = 1
+GOOGLE_THREAD_LINK_LIMIT = 5
 REPLACE_MORE_LIMIT= 3
 SEARCH_REDDIT = ' site:reddit.com'
 
@@ -51,19 +52,16 @@ def createCPUThreadPool(num=None):
 
 
 def getGoogleResultsFromSearch(searchString, googlePageLimit=GOOGLE_PAGE_LIMIT):
-    return google.search(searchString, googlePageLimit)
+    return google.search(searchString, googlePageLimit)[:GOOGLE_THREAD_LINK_LIMIT]
 
 
 def convertSearchResultsToDataframe(googleResults):
     googleResults = [result for result in googleResults if isResultValidLink(result)]
     commentsFromResult = []
 
-    timer = time.time()
     commentsFromResult = resultsToCommentListParallel(googleResults)
-    logger.warning(f'converting took: {time.time()-timer}')
 
     df = pd.DataFrame(data=commentsFromResult)
-    logger.info(df.head())
 
     return df
 
@@ -88,15 +86,12 @@ def resultsToCommentListParallel(googleResults):
 
 def convertResultToCommentList(result, reddit):
     resultData = []
-    logger.debug(f'Getting comments from link:{result.link}')
     try:
         submission = reddit.submission(url=result.link)
         submission.comments.replace_more(REPLACE_MORE_LIMIT)
-        buildRowTime = time.time()
         for comment in submission.comments.list():
             if(filterCommentForRelevancy(comment)):
                 resultData.extend(buildRowFromComment(comment))
-        logger.warning(f'building rows took {time.time()-buildRowTime}')
     except praw.exceptions.ClientException:
         logger.warn("Google search returned non submission:" + result.link)
     return resultData
@@ -143,9 +138,11 @@ def searchAndExtract(argv):
 
     t = time.time()
     googleResults = getGoogleResultsFromSearch(argv + SEARCH_REDDIT)
+    logger.info(f'get Google Results took {time.time()-t} seconds')
     df = convertSearchResultsToDataframe(googleResults)
-    logger.info('Creating extracted column...')
+    logger.info(f'convert Results to Dataframe took {time.time()-t} seconds')
     spacyner.createExtractedColumn(df)
+    logger.info(f'Extracting results took {time.time()-t} seconds')
     json = df.to_json()
     logger.info(f'total time took {time.time()-t} seconds')
     return json

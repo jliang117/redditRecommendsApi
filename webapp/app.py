@@ -1,10 +1,10 @@
-import os
-
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
+from flask_cors import CORS
 
 import search
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/')
 def hello():

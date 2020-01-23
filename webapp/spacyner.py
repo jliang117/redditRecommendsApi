@@ -33,7 +33,6 @@ def spacyValues(df):
     for index, row in df.iterrows():
         currDf = spacyTagging(row['body'])
         entityDf = entityDf.append(currDf)
-    print(entityDf['Entity'].value_counts())
 
 
 def spacyIdNounPhrases(sents):
@@ -88,7 +87,4 @@ def consolidateEntities(listOfEnts):
 
 def createExtractedColumn(df, consolidate=True):
     import time
-    start = time.time()
     df['extracted'] = df['body'].apply(lambda text: spacyTagging(text))
-    logger.info(f'apply took:{time.time() - start} seconds')
-    startv = time.time()
