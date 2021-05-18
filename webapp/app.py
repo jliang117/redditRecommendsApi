@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, abort
+from flask import Flask, jsonify, request, abort, send_from_directory
 from flask_cors import CORS
 
 import search
@@ -8,7 +8,7 @@ CORS(app)
 
 @app.route('/')
 def hello():
-    return 'Hello world!'
+    return app.send_static_file('../README.md')
 
 @app.route('/search', methods=['POST'])
 def search_with_posted_string():
