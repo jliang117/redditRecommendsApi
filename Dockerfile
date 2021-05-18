@@ -5,7 +5,7 @@ COPY requirements.txt /requirements.txt
 
 RUN pip install --upgrade pip 
 RUN pip install -r /requirements.txt 
-RUN python -m spacy download en
+RUN python -m spacy download en_core_web_sm
 # Add our code
 ADD ./webapp /opt/webapp/
 WORKDIR /opt/webapp
