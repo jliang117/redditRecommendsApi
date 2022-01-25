@@ -11,9 +11,10 @@ ADD ./webapp /opt/webapp/
 WORKDIR /opt/webapp
 
 # Expose is NOT supported by Heroku
-# EXPOSE 5000 		
+#EXPOSE 8000	
 
 # Run the app.  CMD is required to run on Heroku
 # $PORT is set by Heroku			
-CMD gunicorn --bind 0.0.0.0:$PORT wsgi 
+#CMD gunicorn --bind 0.0.0.0:8080 wsgi 
+CMD ["gunicorn"  , "--bind", "0.0.0.0:$PORT", "app:app"]
 

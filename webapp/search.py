@@ -4,7 +4,7 @@ import re
 
 # external
 import praw
-from googleSearcher import google
+from serpapi import GoogleSearch
 import pandas as pd
 from loguru import logger
 
@@ -24,6 +24,7 @@ SEARCH_REDDIT = ' site:reddit.com'
 CLIENT_ID = 'TGx9s4azwjK2wQ'
 CLIENT_SECRET = 'C39wISck0di0SdxYBQLbqeFTwCo'
 USER_AGENT = 'script:redditRecommends:v0.0.1'
+SERP_API_KEY = '0bc291ac1aea924d662e8b406ab2daac5cb9f2f5f45367ef93a99cbb574dc2d3'
 
 
 # global vars for csv column names
@@ -35,7 +36,7 @@ SUBREDDIT = 'subreddit'
 SCORE = 'score'
 
 # match on reddit links only
-LINK_REGEX = 'www\.reddit\.(com)\/(.?)\/(.*)\/comments'
+LINK_REGEX = 'https:\/\/www\.reddit\.(com)\/(.?)\/(.*)\/comments'
 
 
 def initRedditClient():
@@ -52,23 +53,29 @@ def createCPUThreadPool(num=None):
 
 
 def getGoogleResultsFromSearch(searchString, googlePageLimit=GOOGLE_PAGE_LIMIT):
-    return google.search(searchString, googlePageLimit)[:GOOGLE_THREAD_LINK_LIMIT]
+    search = GoogleSearch({
+        "q": f"${searchString} site:www.reddit.com",
+        "api_key": SERP_API_KEY
+    })
+    result = search.get_dict()
+    links = list(map(lambda result: result["link"], result["organic_results"]))
+    return links
 
 
 def convertSearchResultsToDataframe(googleResults):
     googleResults = [result for result in googleResults if isResultValidLink(result)]
+    logger.info(googleResults)
     commentsFromResult = []
-
     commentsFromResult = resultsToCommentListParallel(googleResults)
-
+    logger.info(commentsFromResult)
     df = pd.DataFrame(data=commentsFromResult)
 
     return df
 
 
 def isResultValidLink(result):
-    if re.search(LINK_REGEX, result.link) is None:
-        logger.warning(f'bad link averted:{result.link}')
+    if re.search(LINK_REGEX, result) is None:
+        logger.warning(f'bad link averted:{result}')
         return False
     return True
 
@@ -87,13 +94,13 @@ def resultsToCommentListParallel(googleResults):
 def convertResultToCommentList(result, reddit):
     resultData = []
     try:
-        submission = reddit.submission(url=result.link)
+        submission = reddit.submission(url=result)
         submission.comments.replace_more(REPLACE_MORE_LIMIT)
         for comment in submission.comments.list():
             if(filterCommentForRelevancy(comment)):
                 resultData.extend(buildRowFromComment(comment))
     except praw.exceptions.ClientException:
-        logger.warn("Google search returned non submission:" + result.link)
+        logger.warn("Google search returned non submission:" + result)
     return resultData
 
 
@@ -138,8 +145,10 @@ def searchAndExtract(argv):
 
     t = time.time()
     googleResults = getGoogleResultsFromSearch(argv + SEARCH_REDDIT)
+    logger.info(googleResults)
     logger.info(f'get Google Results took {time.time()-t} seconds')
     df = convertSearchResultsToDataframe(googleResults)
+    logger.info(df.head())
     logger.info(f'convert Results to Dataframe took {time.time()-t} seconds')
     spacyner.createExtractedColumn(df)
     logger.info(f'Extracting results took {time.time()-t} seconds')

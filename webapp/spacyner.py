@@ -14,7 +14,7 @@ JW_SCORE_THRESHOLD = float(.90)
 def loadSpacy():
     global NLP
     if NLP is None:
-        NLP = spacy.load('en')
+        NLP = spacy.load('en_core_web_sm')
         return NLP
     else:
         return NLP
