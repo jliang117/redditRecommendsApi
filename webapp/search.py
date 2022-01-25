@@ -54,7 +54,7 @@ def createCPUThreadPool(num=None):
 
 def getGoogleResultsFromSearch(searchString, googlePageLimit=GOOGLE_PAGE_LIMIT):
     search = GoogleSearch({
-        "q": f"${searchString} site:www.reddit.com",
+        "q": searchString,
         "api_key": SERP_API_KEY
     })
     result = search.get_dict()
